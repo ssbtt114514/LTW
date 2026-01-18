@@ -9,6 +9,16 @@
 
 #define CTX_CHECK() if (!current_context) return;
 
+void glBeginQuery (GLenum target, GLuint id) {
+    if(target == GL_SAMPLES_PASSED) target = GL_ANY_SAMPLES_PASSED;
+    es3_functions.glBeginQuery(target, id);
+}
+
+void glEndQuery (GLenum target) {
+    if(target == GL_SAMPLES_PASSED) target = GL_ANY_SAMPLES_PASSED;
+    es3_functions.glEndQuery(target);
+}
+
 // Minecraft uses these only for timer queries
 void glGetQueryObjecti64v(GLuint id, GLenum pname, int64_t* params){
     CTX_CHECK();

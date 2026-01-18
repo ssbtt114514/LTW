@@ -124,6 +124,10 @@ void build_extension_string(context_t* context) {
         add_extra_extension(context, &length, "GL_ARB_draw_buffers_blend");
     // Used by Minecraft for the GPU usage counter (see Blaze3D TimerQuery)
     add_extra_extension(context, &length, "GL_ARB_timer_query");
+    add_extra_extension(context, &length, "GL_ARB_framebuffer_object");
+    add_extra_extension(context, &length, "GL_ARB_vertex_array_object");
+    add_extra_extension(context, &length, "GL_ARB_draw_instanced");
+    add_extra_extension(context, &length, "GL_ARB_explicit_attrib_location");
     // More extensions are possible, but will need way more wraps and tracking.
     fin_extra_extensions(context, length);
 }

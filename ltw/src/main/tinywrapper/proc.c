@@ -70,6 +70,11 @@ static eglMustCastToProperFunctionPointerType resolve_stub(const char* procname)
     return dlsym(NULL, stub_procname);
 }
 
+static void unknown_stub() {
+    printf("Unknown stub! Aborting to produce backtrace...\n");
+    abort();
+}
+
 eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname) {
     // EGL functions that we implement.
     // All of the other platform EGL functions will be redirected into Android's default EGL implementation.
@@ -79,7 +84,10 @@ eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname) {
         if(!strcmp("eglMakeCurrent", procname)) return (eglMustCastToProperFunctionPointerType) eglMakeCurrent;
     }
     // If the function doesn't start with "gl", don't even bother, pass through immediately.
-    if(strncmp(procname, "gl", 2) != 0) goto fallback;
+    if(strncmp(procname, "gl", 2) != 0) {
+        return host_eglGetProcAddress(procname);
+    }
+
 #define GLESOVERRIDE(name)                                        \
     if(!strcmp(procname, #name)) {                                \
         printf("LTW: Overridden %s\n", #name);                        \
@@ -87,9 +95,17 @@ eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname) {
     }
 #include "es3_overrides.h"
 #undef GLESOVERRIDE
-    eglMustCastToProperFunctionPointerType function;
-fallback:
-    function = host_eglGetProcAddress(procname);
-    if(function == NULL) function = resolve_stub(procname);
-    return function;
+#define GLESFUNC(name, unused_type) \
+    if(!strcmp(procname, #name)) {                                \
+        return (eglMustCastToProperFunctionPointerType) es3_functions.name;     \
+    }
+#include "es3_functions.h"
+#include "es3_extended.h"
+#undef GLESFUNC
+
+    // Route ALL unresolved functions to stubs. Just in case if they get routed into the driver and get
+    // stubbed there.
+    eglMustCastToProperFunctionPointerType stubFunction = resolve_stub(procname);
+    if(stubFunction == NULL) return unknown_stub;
+    return stubFunction;
 }

@@ -188,6 +188,31 @@ INTERNAL bool filter_params_float(GLenum target, GLenum pname, GLfloat param) {
     }
     return true;
 }
+
+static void remove_mipmaps(GLenum pname, GLint* param) {
+    if(pname != GL_TEXTURE_MIN_FILTER) return;
+    switch (*param) {
+        case GL_NEAREST_MIPMAP_NEAREST:
+        case GL_NEAREST_MIPMAP_LINEAR:
+            *param = GL_NEAREST;
+            break;
+        case GL_LINEAR_MIPMAP_NEAREST:
+        case GL_LINEAR_MIPMAP_LINEAR:
+            *param = GL_LINEAR;
+            break;
+    }
+}
+
+static void make_depthtex_nearest(GLenum target, GLenum pname, GLint *param) {
+    if(!current_context->es31) return;
+    if(pname != GL_TEXTURE_MIN_FILTER && pname != GL_TEXTURE_MAG_FILTER) return;
+    GLint depth_type = GL_NONE;
+    es3_functions.glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH_TYPE, &depth_type);
+    if(depth_type != GL_NONE) {
+        *param = GL_NEAREST;
+    }
+}
+
 void glTexParameterf( 	GLenum target,
                          GLenum pname,
                          GLfloat param) {
@@ -203,6 +228,8 @@ void glTexParameteri( 	GLenum target,
     if(!filter_params_integer(target, pname, param)) return;
     if(!filter_params_float(target, pname, (GLfloat)param)) return;
     swizzle_process_swizzle_param(target, pname, &param);
+    remove_mipmaps(pname, &param);
+    make_depthtex_nearest(target, pname, &param);
     es3_functions.glTexParameteri(target, pname, param);
 }
 
@@ -221,6 +248,8 @@ void glTexParameteriv( 	GLenum target,
     if(!filter_params_integer(target, pname, *params)) return;
     if(!filter_params_float(target, pname, (GLfloat)*params)) return;
     swizzle_process_swizzle_param(target, pname, params);
+    remove_mipmaps(pname, params);
+    make_depthtex_nearest(target, pname, params);
     es3_functions.glTexParameteriv(target, pname, params);
 }
 static bool trigger_gltexparameteri = false;
@@ -307,7 +336,7 @@ const GLubyte* glGetString(GLenum name) {
     if(!current_context) return NULL;
     switch(name) {
         case GL_VERSION:
-            return (const GLubyte*)"3.0 OpenLTW (Built on: "__DATE__"/"__TIME__")";
+            return (const GLubyte*)"3.3 OpenLTW (Built on: "__DATE__"/"__TIME__")";
         case GL_SHADING_LANGUAGE_VERSION:
             return (const GLubyte*)"4.60 LTW";
         case GL_VENDOR:
@@ -318,6 +347,14 @@ const GLubyte* glGetString(GLenum name) {
         default:
             return es3_functions.glGetString(name);
     }
+}
+
+GLenum glCheckFramebufferStatusEXT( 	GLenum target) {
+    return glCheckFramebufferStatus(target);
+}
+
+GLenum glCheckFramebufferStatusARB( 	GLenum target) {
+    return glCheckFramebufferStatus(target);
 }
 
 static bool debug = false;

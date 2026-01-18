@@ -19,5 +19,6 @@
     </application>
     <queries>
         <package android:name="git.artdeell.mojo.debug"/>
+        <package android:name="git.artdeell.dnbootstrap"/>
     </queries>
 </manifest>

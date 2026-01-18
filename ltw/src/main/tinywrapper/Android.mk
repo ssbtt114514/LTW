@@ -412,6 +412,6 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := glsl_optimizer
 LOCAL_LDFLAGS := -ffunction-sections -fdata-sections -Wl,--version-script=$(LOCAL_PATH)/version.script
 # Comment for debugging
-LOCAL_LDFLAGS += -flto -Wl,--gc-sections
+#LOCAL_LDFLAGS += -flto -Wl,--gc-sections
 LOCAL_LDLIBS := -llog -lEGL
 include $(BUILD_SHARED_LIBRARY)

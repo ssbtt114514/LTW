@@ -34,6 +34,11 @@ void glGetQueryObjectiv( 	GLuint id,
 void glDepthRange(GLdouble nearVal,
                   GLdouble farVal);
 
+GLenum glCheckFramebufferStatusARB( 	GLenum target);
+
+void glDebugMessageCallbackKHR( GLDEBUGPROC callback,
+                                const void * userParam);
+
 GLESOVERRIDE(glClearDepth)
 GLESOVERRIDE(glMapBuffer)
 GLESOVERRIDE(glGetTexLevelParameteriv)
@@ -133,3 +138,7 @@ GLESOVERRIDE(glTexBuffer)
 GLESOVERRIDE(glTexBufferRange)
 GLESOVERRIDE(glMapBufferRange)
 GLESOVERRIDE(glFlushMappedBufferRange)
+GLESOVERRIDE(glCheckFramebufferStatusEXT)
+GLESOVERRIDE(glCheckFramebufferStatusARB)
+GLESOVERRIDE(glBeginQuery)
+GLESOVERRIDE(glEndQuery)
