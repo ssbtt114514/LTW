@@ -691,6 +691,45 @@ IR_TO_GLSL::visit(ir_variable* ir)
 	print_var_name(ir);
 	print_type_post(generated_source, ir->type, false);
 
+    if(ir->data.mode == ir_var_uniform) {
+        ir_constant* const_val = ir->constant_value;
+        if(const_val == NULL) const_val = ir->constant_initializer;
+        if(const_val != NULL) {
+            const glsl_type* assign_type = const_val->type;
+            const glsl_base_type base_type = assign_type->base_type;
+            if(assign_type->is_array() || assign_type->is_struct() || assign_type->is_matrix()) {
+                printf("shader_print: %s default value is array, struct or matrix\n", ir->name);
+                abort();
+            }
+            char type;
+            switch (base_type) {
+                case GLSL_TYPE_FLOAT:
+                case GLSL_TYPE_FLOAT16:
+                    type = 'f';
+                    break;
+                case GLSL_TYPE_INT:
+                case GLSL_TYPE_INT8:
+                case GLSL_TYPE_INT16:
+                case GLSL_TYPE_INT64:
+                    type = 'i';
+                    break;
+                case GLSL_TYPE_UINT:
+                case GLSL_TYPE_UINT8:
+                case GLSL_TYPE_UINT16:
+                case GLSL_TYPE_UINT64:
+                    type = 'u';
+                default:
+                    printf("shader_print: %s default value is not float, int or uint\n", ir->name);
+                    abort();
+                    break;
+            }
+
+            generated_source.append("/* LTW UNIFORM INIT %c %i %s ", type, assign_type->vector_elements, ir->name);
+            visit(const_val);
+            generated_source.append(" */");
+        }
+    }
+
 	if (ir->constant_value &&
 		ir->data.mode != ir_var_shader_in &&
 		ir->data.mode != ir_var_shader_out &&

@@ -248,7 +248,7 @@ char* gl4es_next_blank(char* pBuffer) {
     return pBuffer;
 }
 
-char* gl4es_next_line(char* pBuffer) {
+char* gl4es_next_line(const char* pBuffer) {
     if(!pBuffer) return NULL;
     while(*pBuffer && *pBuffer!='\n')
         ++pBuffer;

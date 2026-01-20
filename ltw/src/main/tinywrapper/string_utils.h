@@ -26,7 +26,7 @@ char* gl4es_str_next(char *pBuffer, const char* S); // mostly as strstr, but go 
 char* gl4es_next_str(char* pBuffer);   // go to next non "blank"
 char* gl4es_prev_str(char* Str, char* pBuffer);    // go to previous non "blank"
 char* gl4es_next_blank(char* pBuffer);   // go to next "blank"
-char* gl4es_next_line(char* pBuffer);   // go to next new line (crlf not included)
+char* gl4es_next_line(const char* pBuffer);   // go to next new line (crlf not included)
 
 const char* gl4es_get_next_str(char* pBuffer); // get a (static) copy of next str (until next separator), can be a simple number or separator also
 
