@@ -135,10 +135,6 @@ void glTexSubImage2D(GLenum target,
         return;
     }
 
-    LOGI("sub buffer con upload %i %i %i %i %i %i %i %i", xoffset, yoffset, width, height,
-         current_context->unpack.skip_pixels, current_context->unpack.skip_rows,
-         current_context->unpack.row_length, current_context->unpack.alignment);
-
     // Otherwise convert
     GLuint tgformat, tgtype;
     pick_store_format_pure(internalformat, &tgtype, &tgformat);
