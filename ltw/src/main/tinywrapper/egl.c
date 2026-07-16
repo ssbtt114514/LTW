@@ -187,7 +187,7 @@ void build_extension_string(context_t* context) {
     if(context->buffer_storage) {
         if(!env_istrue("LTW_HIDE_BUFFER_STORAGE"))
             add_extra_extension(context, &length, "GL_ARB_buffer_storage");
-        else printf("LTW: The buffer storage extension is hidden.\n");
+        else LTW_ERROR_PRINTF("LTW: The buffer storage extension is hidden.");
     }
     if(context->buffer_texture_ext || context->es32) {
         add_extra_extension(context, &length, "GL_ARB_texture_buffer_object");
@@ -260,10 +260,10 @@ static void find_esversion(context_t* context) {
     sscanf(version, " OpenGL ES %i.%i", &esmajor, &esminor);
     sscanf(shader_version, " OpenGL ES GLSL ES %i.%i", &shadermajor, &shaderminor);
     context->shader_version = shadermajor * 100 + shaderminor;
-    printf("LTW: Running on OpenGL ES %i.%i with ESSL %i\n", esmajor, esminor, context->shader_version);
+    LTW_ERROR_PRINTF("LTW: Running on OpenGL ES %i.%i with ESSL %i", esmajor, esminor, context->shader_version);
     if(esmajor == 0 && esminor == 0) goto fail;
     if(esmajor < 3 || context->shader_version < 300) {
-        printf("Unsupported OpenGL ES version. This will cause you problems down the line.\n");
+        LTW_ERROR_PRINTF("Unsupported OpenGL ES version. This will cause you problems down the line.");
         return;
     }
     if(esmajor == 3) {
@@ -332,7 +332,7 @@ static void find_esversion(context_t* context) {
 
     return;
     fail:
-    printf("LTW: Failed to detect OpenGL ES version");
+    LTW_ERROR_PRINTF("LTW: Failed to detect OpenGL ES version");
 }
 
 void basevertex_init(context_t* context);
@@ -422,7 +422,7 @@ EGLBoolean eglMakeCurrent (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
     }
     context_t* tw_context = unordered_map_get(context_map, ctx);
     if(tw_context == NULL) {
-        printf("TinywrapperEGL: Failed to find context %p\n", ctx);
+        LTW_ERROR_PRINTF("TinywrapperEGL: Failed to find context %p", ctx);
         abort();
     }
     if(!tw_context->context_rdy) {

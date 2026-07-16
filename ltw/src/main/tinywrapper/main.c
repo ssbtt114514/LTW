@@ -111,7 +111,7 @@ static bool trigger_texlevelparameter = false;
 static bool check_texlevelparameter() {
     if(current_context->es31) return true;
     if(trigger_texlevelparameter) return false;
-    printf("glGetTexLevelParameter* functions are not supported below OpenGL ES 3.1\n");
+    LTW_ERROR_PRINTF("glGetTexLevelParameter* functions are not supported below OpenGL ES 3.1");
     trigger_texlevelparameter = true;
     return false;
 }
@@ -174,7 +174,7 @@ INTERNAL bool filter_params_float(GLenum target, GLenum pname, GLfloat param) {
         if(param != 0.0f) {
             static bool lodbias_trigger = false;
             if(!lodbias_trigger) {
-                printf("LTW: setting GL_TEXTURE_LOD_BIAS to nondefault value not supported\n");
+                LTW_ERROR_PRINTF("LTW: setting GL_TEXTURE_LOD_BIAS to nondefault value not supported");
             }
         }
         return false;
@@ -223,7 +223,7 @@ void glTexParameterIiv( 	GLenum target,
     if(!current_context) return;
     if(pname != GL_TEXTURE_SWIZZLE_RGBA) {
         if(!trigger_gltexparameteri) {
-            printf("LTW: glTexParameterIiv for parameters other than GL_TEXTURE_SWIZZLE_RGBA is not supported\n");
+            LTW_ERROR_PRINTF("LTW: glTexParameterIiv for parameters other than GL_TEXTURE_SWIZZLE_RGBA is not supported");
             trigger_gltexparameteri = true;
         }
         return;
@@ -237,7 +237,7 @@ void glTexParameterIuiv( 	GLenum target,
     if(!current_context) return;
     if(pname != GL_TEXTURE_SWIZZLE_RGBA) {
         if(!trigger_gltexparameteri) {
-            printf("LTW: glTexParameterIuiv for parameters other than GL_TEXTURE_SWIZZLE_RGBA is not supported\n");
+            LTW_ERROR_PRINTF("LTW: glTexParameterIuiv for parameters other than GL_TEXTURE_SWIZZLE_RGBA is not supported");
             trigger_gltexparameteri = true;
         }
         return;
@@ -477,7 +477,7 @@ void glTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer) {
     else if(current_context->buffer_texture_ext) es3_functions.glTexBufferEXT(target, internalFormat, buffer);
     else if(!buf_tex_trigger) {
         buf_tex_trigger = true;
-        printf("LTW: Buffer textures aren't supported on your device\n");
+        LTW_ERROR_PRINTF("LTW: Buffer textures aren't supported on your device");
     }
 }
 
@@ -491,7 +491,7 @@ void glTexBufferRange(GLenum target, GLenum internalFormat, GLuint buffer, GLint
     else if(current_context->buffer_texture_ext) es3_functions.glTexBufferRangeEXT(target, internalFormat, buffer, offset, size);
     else if(!buf_tex_trigger) {
         buf_tex_trigger = true;
-        printf("LTW: Buffer textures aren't supported on your device\n");
+        LTW_ERROR_PRINTF("LTW: Buffer textures aren't supported on your device");
     }
 }
 
@@ -506,7 +506,7 @@ __attribute((constructor)) void init_noerror() {
     debug = env_istrue("LTW_DEBUG");
     never_flush_buffers = env_istrue_d("LTW_NEVER_FLUSH_BUFFERS", true);
     coherent_dynamic_storage = env_istrue_d("LTW_COHERENT_DYNAMIC_STORAGE", true);
-    if(!noerror) printf("LTW will NOT ignore GL errors. This may break mods, consider yourself warned.\n");
+    if(!noerror) LTW_ERROR_PRINTF("LTW will NOT ignore GL errors. This may break mods, consider yourself warned.");
     if(coherent_dynamic_storage) printf("LTW will force dynamic storage buffers to be coherent.\n");
     if(debug) printf("LTW will allow GL_DEBUG_OUTPUT to be enabled. Expect massive logs.\n");
     if(never_flush_buffers) printf("LTW will prevent all explicit buffer flushes.\n");
