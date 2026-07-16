@@ -1,0 +1,120 @@
+name: CI
+
+# Comprehensive build, verification and release pipeline for Large Thin Wrapper (LTW).
+# Builds the native AAR for all supported ABIs, verifies the artifact, and publishes
+# a GitHub Release when a version tag (v*) is pushed.
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref. Keep branch runs to completion.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build & verify AAR
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Pre-install the platform + NDK pinned by the Gradle build. If the exact NDK
+      # revision is unavailable in the repository, AGP will still install it on demand.
+      - name: Install Android platform and NDK
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platforms;android-34" "ndk;28.2.13676358" || \
+            echo "::warning::Could not pre-install NDK; AGP will install it on demand."
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build release AAR
+        run: ./gradlew :ltw:assembleRelease --no-daemon --stacktrace
+
+      # Verification: ensure the AAR exists, is non-trivial in size, and contains the
+      # expected native libraries for every target ABI.
+      - name: Verify AAR artifact
+        run: |
+          set -e
+          AAR="ltw/build/outputs/aar/ltw-release.aar"
+          if [ ! -f "$AAR" ]; then
+            echo "::error::AAR was not produced at $AAR"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "$AAR")
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "::error::AAR is suspiciously small ($SIZE bytes); native build likely failed."
+            exit 1
+          fi
+          echo "AAR produced: $AAR ($SIZE bytes)"
+          echo
+          echo "=== AAR contents ==="
+          unzip -l "$AAR"
+          echo
+          echo "=== Native libraries per ABI ==="
+          unzip -Z -1 "$AAR" | grep -E 'lib/[^/]+/libltw\.so' | sort || \
+            { echo "::error::No libltw.so native libraries found in AAR"; exit 1; }
+
+      - name: Upload AAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ltw-release-aar
+          path: ltw/build/outputs/aar/ltw-release.aar
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download AAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ltw-release-aar
+          path: artifacts
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/ltw-release.aar
+          generate_release_notes: true
+          fail_on_unmatched_files: true
