@@ -297,10 +297,24 @@ const GLubyte* glGetStringi(GLenum name, GLuint index) {
 const GLubyte* glGetString(GLenum name) {
     if(!current_context) return NULL;
     switch(name) {
-        case GL_VERSION:
+        case GL_VERSION: {
+            // Compatibility knob for older Minecraft releases (1.17 and below)
+            // that hard-code checks against the reported OpenGL version. Default
+            // remains 3.3 for modern releases; set LTW_GL_VERSION=3.2 to target
+            // older render paths.
+            const char* compat_version = getenv("LTW_GL_VERSION");
+            if(compat_version && strcmp(compat_version, "3.2") == 0) {
+                return (const GLubyte*)"3.2 OpenLTW (Built on: "__DATE__"/"__TIME__")";
+            }
             return (const GLubyte*)"3.3 OpenLTW (Built on: "__DATE__"/"__TIME__")";
-        case GL_SHADING_LANGUAGE_VERSION:
+        }
+        case GL_SHADING_LANGUAGE_VERSION: {
+            const char* compat_version = getenv("LTW_GL_VERSION");
+            if(compat_version && strcmp(compat_version, "3.2") == 0) {
+                return (const GLubyte*)"1.50 LTW";
+            }
             return (const GLubyte*)"4.60 LTW";
+        }
         case GL_VENDOR:
             return (const GLubyte*)"artDev, SerpentSpirale, CADIndie";
         case GL_EXTENSIONS:

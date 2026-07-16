@@ -110,6 +110,13 @@ void fin_extra_extensions(context_t* context, int length) {
 void build_extension_string(context_t* context) {
     int length;
     init_extra_extensions(context, &length);
+
+    // Compatibility mode for older Minecraft releases (1.17 and below). When
+    // LTW_GL_VERSION=3.2 is set we omit extensions that only exist on ES 3.1/3.2
+    // so the application does not take render paths that require compute shaders,
+    // SSBOs, indirect drawing, etc.
+    const char* compat_version = getenv("LTW_GL_VERSION");
+    bool compat_3_2 = compat_version && strcmp(compat_version, "3.2") == 0;
     if(context->buffer_storage) {
         if(!env_istrue("LTW_HIDE_BUFFER_STORAGE"))
             add_extra_extension(context, &length, "GL_ARB_buffer_storage");
@@ -136,7 +143,7 @@ void build_extension_string(context_t* context) {
     // to the driver's own (same-named) ES implementations through eglGetProcAddress, and the desktop
     // GLSL is lowered to ESSL by the optimizer (see shader_wrapper.c / glsl_optimizer). Exposed only
     // on devices that actually report ES 3.1, so the application never takes an unsupported path.
-    if(context->es31) {
+    if(context->es31 && !compat_3_2) {
         add_extra_extension(context, &length, "GL_ARB_draw_indirect");
         add_extra_extension(context, &length, "GL_ARB_texture_multisample");
         add_extra_extension(context, &length, "GL_ARB_texture_storage_multisample");
@@ -167,7 +174,7 @@ void build_extension_string(context_t* context) {
     }
 
     // glCopyImageSubData is core since OpenGL ES 3.2.
-    if(context->es32) {
+    if(context->es32 && !compat_3_2) {
         add_extra_extension(context, &length, "GL_ARB_copy_image");
     }
 
