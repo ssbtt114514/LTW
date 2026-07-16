@@ -19,6 +19,8 @@
 #include "swizzle.h"
 #include "libraryinternal.h"
 #include "env.h"
+#include "debug.h"
+#include "mempool.h"
 
 void glClearDepth(GLdouble depth) {
     if(!current_context) return;
@@ -521,5 +523,24 @@ void glDebugMessageControl( 	GLenum source,
                                GLsizei count,
                                const GLuint *ids,
                                GLboolean enabled) {
-    //STUB
+}
+
+void glDrawArrays(GLenum mode, GLint first, GLsizei count) {
+    if(!current_context) return;
+    current_context->fast_gl.glDrawArrays(mode, first, count);
+}
+
+void glDrawElements(GLenum mode, GLsizei count, GLenum type, const void* indices) {
+    if(!current_context) return;
+    current_context->fast_gl.glDrawElements(mode, count, type, indices);
+}
+
+void glLTWBeginBatchUpdate(void) {
+    if(!current_context) return;
+    swizzle_begin_batch_update();
+}
+
+void glLTWEndBatchUpdate(void) {
+    if(!current_context) return;
+    swizzle_end_batch_update();
 }

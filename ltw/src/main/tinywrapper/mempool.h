@@ -1,0 +1,32 @@
+#ifndef POJAVLAUNCHER_MEMPOOL_H
+#define POJAVLAUNCHER_MEMPOOL_H
+
+#include <stddef.h>
+#include <stdbool.h>
+
+#define MEMPOOL_MAX_POOLS 8
+#define MEMPOOL_CHUNK_SIZE 64
+#define MEMPOOL_ALIGNMENT 16
+
+typedef struct mempool_block {
+    struct mempool_block* next;
+} mempool_block_t;
+
+typedef struct mempool {
+    size_t object_size;
+    size_t chunk_size;
+    mempool_block_t* free_list;
+    void* chunks;
+    size_t total_chunks;
+    size_t used_count;
+    size_t free_count;
+} mempool_t;
+
+mempool_t* mempool_create(size_t object_size, size_t chunk_size);
+void mempool_destroy(mempool_t* pool);
+void* mempool_alloc(mempool_t* pool);
+void mempool_free(mempool_t* pool, void* ptr);
+void mempool_get_stats(mempool_t* pool, size_t* total, size_t* used, size_t* free);
+void mempool_reset(mempool_t* pool);
+
+#endif //POJAVLAUNCHER_MEMPOOL_H

@@ -407,6 +407,8 @@ LOCAL_SRC_FILES := \
     swizzle.c \
     license_notice.c \
     env.c \
+    mempool.c \
+    mempool.cpp \
     vgpu_shaderconv/shaderconv.c \
     unordered_map/unordered_map.c \
     unordered_map/int_hash.c

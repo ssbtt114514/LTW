@@ -18,6 +18,7 @@
 #define MAX_FBTARGETS 8
 #define MAX_TMUS 8
 #define MAX_TEXTARGETS 8
+#define FORMAT_CACHE_SIZE 64
 
 typedef struct {
     bool ready;
@@ -62,9 +63,22 @@ typedef struct {
 
 typedef struct {
     GLenum original_swizzle[4];
+    GLenum applied_swizzle[4];
+    GLenum pending_swizzle[4];
     GLboolean goofy_byte_order;
     GLboolean upload_bgra;
+    GLboolean has_pending_update;
+    GLenum texture_target;
 } texture_swizzle_track_t;
+
+typedef struct {
+    GLint internalformat;
+    GLenum type;
+    GLenum format;
+    bool valid;
+} format_cache_entry_t;
+
+typedef struct mempool mempool_t;
 
 typedef struct {
     EGLContext phys_context;
@@ -89,9 +103,38 @@ typedef struct {
     GLuint draw_framebuffer;
     GLuint read_framebuffer;
     char* extensions_string;
+    size_t extensions_capacity;
     size_t nextras;
     int nextensions_es;
     char** extra_extensions_array;
+    format_cache_entry_t format_cache[FORMAT_CACHE_SIZE];
+    int format_cache_index;
+    GLsizei multidraw_buffer_size;
+    mempool_t* shader_info_pool;
+    mempool_t* program_info_pool;
+    mempool_t* framebuffer_pool;
+    mempool_t* swizzle_track_pool;
+    GLuint pending_swizzle_textures[64];
+    int pending_swizzle_count;
+    bool swizzle_batch_mode;
+    struct {
+        void (*glDrawArrays)(GLenum, GLint, GLsizei);
+        void (*glDrawElements)(GLenum, GLsizei, GLenum, const void*);
+        void (*glBindBuffer)(GLenum, GLuint);
+        void (*glBindTexture)(GLenum, GLuint);
+        void (*glTexParameteri)(GLenum, GLenum, GLint);
+        void (*glGetTexParameteriv)(GLenum, GLenum, GLint*);
+        void (*glGetIntegerv)(GLenum, GLint*);
+        void (*glBufferData)(GLenum, GLsizeiptr, const void*, GLenum);
+        void (*glBufferSubData)(GLenum, GLintptr, GLsizeiptr, const void*);
+        void (*glCopyBufferSubData)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
+        void* (*glMapBufferRange)(GLenum, GLintptr, GLsizeiptr, GLbitfield);
+        unsigned char (*glUnmapBuffer)(GLenum);
+        void (*glFlushMappedBufferRange)(GLenum, GLintptr, GLsizeiptr);
+    } fast_gl;
+    size_t multidraw_ring_head;
+    size_t multidraw_ring_tail;
+    bool multidraw_ring_wrapped;
 } context_t;
 
 extern thread_local context_t *current_context;

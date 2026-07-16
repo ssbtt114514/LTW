@@ -7,6 +7,8 @@
 #include "unordered_map/int_hash.h"
 #include "string_utils.h"
 #include "env.h"
+#include "debug.h"
+#include "mempool.h"
 #include <string.h>
 
 thread_local context_t *current_context;
@@ -40,9 +42,23 @@ static bool init_context(context_t* tw_context) {
         if(!map) goto fail_dealloc;
         tw_context->bound_basebuffers[i] = map;
     }
+
+    tw_context->shader_info_pool = mempool_create(sizeof(struct shader_info_t), 64);
+    if(!tw_context->shader_info_pool) goto fail_dealloc;
+    tw_context->program_info_pool = mempool_create(sizeof(struct program_info_t), 32);
+    if(!tw_context->program_info_pool) goto fail_dealloc;
+    tw_context->framebuffer_pool = mempool_create(sizeof(framebuffer_t), 32);
+    if(!tw_context->framebuffer_pool) goto fail_dealloc;
+    tw_context->swizzle_track_pool = mempool_create(sizeof(texture_swizzle_track_t), 128);
+    if(!tw_context->swizzle_track_pool) goto fail_dealloc;
+
     return true;
 
     fail_dealloc:
+    if(tw_context->swizzle_track_pool) mempool_destroy(tw_context->swizzle_track_pool);
+    if(tw_context->framebuffer_pool) mempool_destroy(tw_context->framebuffer_pool);
+    if(tw_context->program_info_pool) mempool_destroy(tw_context->program_info_pool);
+    if(tw_context->shader_info_pool) mempool_destroy(tw_context->shader_info_pool);
     for(int i = 0; i < MAX_BOUND_BASEBUFFERS; i++) {
         unordered_map *map = tw_context->bound_basebuffers[i];
         if(map) unordered_map_free(map);
@@ -57,7 +73,6 @@ static bool init_context(context_t* tw_context) {
         unordered_map_free(tw_context->texture_swztrack_map);
     fail:
     return false;
-}
 
 static void free_context(context_t* tw_context) {
     unordered_map_free(tw_context->shader_map);
@@ -71,29 +86,79 @@ static void free_context(context_t* tw_context) {
         }
         free(tw_context->extra_extensions_array);
     }
+
+    if(tw_context->shader_info_pool) mempool_destroy(tw_context->shader_info_pool);
+    if(tw_context->program_info_pool) mempool_destroy(tw_context->program_info_pool);
+    if(tw_context->framebuffer_pool) mempool_destroy(tw_context->framebuffer_pool);
+    if(tw_context->swizzle_track_pool) mempool_destroy(tw_context->swizzle_track_pool);
 }
 
 void init_extra_extensions(context_t* context, int* length) {
     const char* es_extensions = (const char*)es3_functions.glGetString(GL_EXTENSIONS);
     *length = (int)strlen(es_extensions);
-    context->extensions_string = malloc(*length + 1);
+    size_t capacity = *length + 512 + 1;
+    context->extensions_string = malloc(capacity);
+    if(!context->extensions_string) {
+        LTW_ERROR_PRINTF("LTW: Failed to allocate memory for extensions string");
+        *length = 0;
+        return;
+    }
+    context->extensions_capacity = capacity;
     memcpy(context->extensions_string, es_extensions, *length+1);
 }
 
 void add_extra_extension(context_t* context, int* length, const char* extension)  {
     size_t extension_len = strlen(extension);
 
-    char str_append_extension[extension_len + 2];
+    if(extension_len > 1024) {
+        LTW_ERROR_PRINTF("LTW: Extension name too long: %zu bytes", extension_len);
+        return;
+    }
+
+    char* str_append_extension = malloc(extension_len + 2);
+    if(!str_append_extension) {
+        LTW_ERROR_PRINTF("LTW: Failed to allocate memory for extension string");
+        return;
+    }
     memcpy(str_append_extension, extension, extension_len);
     str_append_extension[extension_len] = ' ';
     str_append_extension[extension_len + 1] = 0;
-    context->extensions_string = gl4es_append(context->extensions_string, length, str_append_extension);
 
-    int extension_idx = context->nextras++;
-    context->extra_extensions_array = realloc(context->extra_extensions_array, sizeof(char*)*context->nextras);
+    size_t current_capacity = context->extensions_capacity;
+    size_t new_length = *length + extension_len + 1;
+    if(new_length >= current_capacity) {
+        size_t new_capacity = new_length + 256;
+        char* new_ptr = realloc(context->extensions_string, new_capacity);
+        if(!new_ptr) {
+            LTW_ERROR_PRINTF("LTW: Failed to reallocate extensions string");
+            free(str_append_extension);
+            return;
+        }
+        context->extensions_string = new_ptr;
+        context->extensions_capacity = new_capacity;
+    }
+
+    int extension_idx = context->nextras;
+    char** new_array = realloc(context->extra_extensions_array, sizeof(char*)*(context->nextras + 1));
+    if(!new_array) {
+        LTW_ERROR_PRINTF("LTW: Failed to reallocate extra extensions array");
+        free(str_append_extension);
+        return;
+    }
+    context->extra_extensions_array = new_array;
     char* extra_extension = malloc(extension_len + 1);
+    if(!extra_extension) {
+        LTW_ERROR_PRINTF("LTW: Failed to allocate memory for extra extension");
+        free(str_append_extension);
+        return;
+    }
     strncpy(extra_extension, extension, extension_len + 1);
     context->extra_extensions_array[extension_idx] = extra_extension;
+
+    memcpy(context->extensions_string + *length, str_append_extension, extension_len + 2);
+    *length += extension_len + 1;
+    context->nextras++;
+    free(str_append_extension);
 }
 
 void fin_extra_extensions(context_t* context, int length) {
@@ -283,6 +348,47 @@ static void init_incontext(context_t* tw_context) {
     basevertex_init(tw_context);
     buffer_copier_init(tw_context);
     es3_functions.glGenBuffers(1, &tw_context->multidraw_element_buffer);
+
+    memset(tw_context->format_cache, 0, sizeof(tw_context->format_cache));
+    tw_context->format_cache_index = 0;
+
+    size_t device_memory_mb = detect_device_memory_mb();
+    if(device_memory_mb >= 6144) {
+        tw_context->multidraw_buffer_size = 512 * 1024;
+        LTW_ERROR_PRINTF("LTW: Using large multidraw buffer (512KB) for high-memory device");
+    } else if(device_memory_mb >= 4096) {
+        tw_context->multidraw_buffer_size = 384 * 1024;
+        LTW_ERROR_PRINTF("LTW: Using medium multidraw buffer (384KB) for mid-range device");
+    } else {
+        tw_context->multidraw_buffer_size = 256 * 1024;
+        LTW_ERROR_PRINTF("LTW: Using small multidraw buffer (256KB) for low-memory device");
+    }
+
+    es3_functions.glBindBuffer(GL_COPY_WRITE_BUFFER, tw_context->multidraw_element_buffer);
+    es3_functions.glBufferData(GL_COPY_WRITE_BUFFER, tw_context->multidraw_buffer_size, NULL, GL_STREAM_DRAW);
+    es3_functions.glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+
+    tw_context->pending_swizzle_count = 0;
+    tw_context->swizzle_batch_mode = false;
+    memset(tw_context->pending_swizzle_textures, 0, sizeof(tw_context->pending_swizzle_textures));
+
+    tw_context->fast_gl.glDrawArrays = es3_functions.glDrawArrays;
+    tw_context->fast_gl.glDrawElements = es3_functions.glDrawElements;
+    tw_context->fast_gl.glBindBuffer = es3_functions.glBindBuffer;
+    tw_context->fast_gl.glBindTexture = es3_functions.glBindTexture;
+    tw_context->fast_gl.glTexParameteri = es3_functions.glTexParameteri;
+    tw_context->fast_gl.glGetTexParameteriv = es3_functions.glGetTexParameteriv;
+    tw_context->fast_gl.glGetIntegerv = es3_functions.glGetIntegerv;
+    tw_context->fast_gl.glBufferData = es3_functions.glBufferData;
+    tw_context->fast_gl.glBufferSubData = es3_functions.glBufferSubData;
+    tw_context->fast_gl.glCopyBufferSubData = es3_functions.glCopyBufferSubData;
+    tw_context->fast_gl.glMapBufferRange = es3_functions.glMapBufferRange;
+    tw_context->fast_gl.glUnmapBuffer = es3_functions.glUnmapBuffer;
+    tw_context->fast_gl.glFlushMappedBufferRange = es3_functions.glFlushMappedBufferRange;
+
+    tw_context->multidraw_ring_head = 0;
+    tw_context->multidraw_ring_tail = 0;
+    tw_context->multidraw_ring_wrapped = false;
 }
 
 EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint *attrib_list) {

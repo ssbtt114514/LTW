@@ -148,3 +148,7 @@ The GLSL shader converter additionally injects `GL_EXT_texture_cube_map_array`,
 | `LTW_HIDE_BUFFER_STORAGE` | unset | When set to `1`, hides `GL_ARB_buffer_storage` from the application. |
 | `LTW_ENABLE_TIMER_QUERY` | unset | When set to `1`, force-enables timer queries even without `GL_EXT_disjoint_timer_query` (faked queries, see `query.c`). |
 | `LTW_GL_VERSION` | unset | Set to `3.2` to report OpenGL 3.2 / GLSL 1.50 and hide ES 3.1/3.2-only extensions, for compatibility with Minecraft 1.17 and older. |
+| `LIBGL_NOERROR` | unset | When set to `1`, glGetError() always returns 0. Useful for mods that don't handle errors properly. |
+| `LTW_DEBUG` | unset | When set to `1`, enables GL_DEBUG_OUTPUT and additional debug logging. |
+| `LTW_NEVER_FLUSH_BUFFERS` | `1` | When set, prevents explicit buffer flushes (glFlushMappedBufferRange), improves performance on some drivers. |
+| `LTW_COHERENT_DYNAMIC_STORAGE` | `1` | When set, forces dynamic storage buffers to be coherent, working around driver bugs. |
