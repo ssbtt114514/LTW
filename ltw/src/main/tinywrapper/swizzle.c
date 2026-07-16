@@ -79,7 +79,7 @@ INTERNAL void swizzle_process_upload(GLenum target, GLenum* format, GLenum* type
     }
 }
 
-INTERNAL void swizzle_process_swizzle_param(GLenum target, GLenum swizzle_param, const GLenum* swizzle) {
+INTERNAL void swizzle_process_swizzle_param(GLenum target, GLenum swizzle_param, const GLint* swizzle) {
     switch (swizzle_param) {
         case GL_TEXTURE_SWIZZLE_R:
         case GL_TEXTURE_SWIZZLE_G:
@@ -97,11 +97,13 @@ INTERNAL void swizzle_process_swizzle_param(GLenum target, GLenum swizzle_param,
         case GL_TEXTURE_SWIZZLE_G:
         case GL_TEXTURE_SWIZZLE_B:
         case GL_TEXTURE_SWIZZLE_A:
-            track->original_swizzle[swizzle_param - GL_TEXTURE_SWIZZLE_R] = *swizzle;
+            track->original_swizzle[swizzle_param - GL_TEXTURE_SWIZZLE_R] = (GLenum)*swizzle;
             apply_swizzles(target, track);
             break;
         case GL_TEXTURE_SWIZZLE_RGBA:
-            memcpy(track->original_swizzle, swizzle, 4 * sizeof(GLenum));
+            for(int i = 0; i < 4; i++) {
+                track->original_swizzle[i] = (GLenum)swizzle[i];
+            }
             apply_swizzles(target, track);
             break;
     }
