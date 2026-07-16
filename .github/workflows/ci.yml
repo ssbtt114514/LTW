@@ -56,16 +56,16 @@ jobs:
           set -e
           LIBS_DIR=ltw/src/main/tinywrapper/libs
           echo "=== Built .so files ==="
-          find "$LIBS_DIR" -name 'libltw.so' -exec ls -lh {} \;
+          find "$LIBS_DIR" -name 'libsr.so' -exec ls -lh {} \;
           echo
           echo "=== Per-ABI check ==="
           missing=0
           for abi in armeabi-v7a arm64-v8a x86 x86_64; do
-            if [ -f "$LIBS_DIR/$abi/libltw.so" ]; then
-              SIZE=$(stat -c%s "$LIBS_DIR/$abi/libltw.so")
+            if [ -f "$LIBS_DIR/$abi/libsr.so" ]; then
+              SIZE=$(stat -c%s "$LIBS_DIR/$abi/libsr.so")
               echo "  OK   $abi ($SIZE bytes)"
             else
-              echo "::error::Missing libltw.so for ABI $abi"
+              echo "::error::Missing libsr.so for ABI $abi"
               missing=1
             fi
           done
@@ -101,6 +101,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            native-libs/*/libltw.so
+            native-libs/*/libsr.so
           generate_release_notes: true
           fail_on_unmatched_files: true

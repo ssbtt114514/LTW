@@ -388,7 +388,7 @@ LOCAL_LDFLAGS := -ffunction-sections -fdata-sections
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := ltw
+LOCAL_MODULE := sr
 LOCAL_SRC_FILES := \
     egl.c \
     proc.c \
@@ -408,7 +408,6 @@ LOCAL_SRC_FILES := \
     license_notice.c \
     env.c \
     mempool.c \
-    mempool.cpp \
     vgpu_shaderconv/shaderconv.c \
     unordered_map/unordered_map.c \
     unordered_map/int_hash.c
