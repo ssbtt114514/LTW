@@ -42,7 +42,6 @@ jobs:
           set -e
           NDK_PATH=/usr/local/lib/android/sdk/ndk/28.2.13676358
           TINYWRAPPER_DIR=ltw/src/main/tinywrapper
-          mkdir -p ltw/build-logs
           "$NDK_PATH/ndk-build" \
             NDK_PROJECT_PATH=null \
             NDK_OUT="$TINYWRAPPER_DIR/obj" \
@@ -51,7 +50,7 @@ jobs:
             NDK_APPLICATION_MK="$TINYWRAPPER_DIR/Application.mk" \
             APP_ABI="armeabi-v7a arm64-v8a x86 x86_64" \
             APP_PLATFORM=android-21 \
-            -j$(nproc) 2>&1 | tee ltw/build-logs/build-output.log
+            -j$(nproc) 2>&1 | tee ltw/ltw.log
 
       - name: Verify built .so files
         run: |
@@ -88,7 +87,7 @@ jobs:
         if: always()
         with:
           name: ltw-build-logs
-          path: ltw/build-logs/
+          path: ltw/ltw.log
           if-no-files-found: ignore
           retention-days: 30
 
