@@ -10,6 +10,14 @@
 #include "egl.h"
 #include <GLES3/gl3.h>
 
+/* The shader_info_t struct holds the per-shader metadata for the LTW
+ * shader wrapper. It is allocated in glCreateShader() (see
+ * shader_wrapper.c) and used for caching the shader source. */
+typedef struct {
+    GLenum shader_type;
+    const GLchar* source;
+} shader_info_t;
+
 /* The program_info_t struct holds the per-program metadata for the LTW
  * shader wrapper. It is allocated in glCreateProgram() (see
  * shader_wrapper.c) and used for storing the bound fragment shader id

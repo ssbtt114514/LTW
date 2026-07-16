@@ -14,11 +14,6 @@
 #include "egl.h"
 #include "proc.h"
 
-typedef struct {
-    GLenum shader_type;
-    const GLchar* source;
-} shader_info_t;
-
 GLuint glCreateProgram(void) {
     if(!current_context) return 0;
     GLuint phys_program = es3_functions.glCreateProgram();
