@@ -28,24 +28,11 @@ void glClearDepth(GLdouble depth) {
 void *glMapBuffer(GLenum target, GLenum access) {
     if(!current_context) return NULL;
 
-    GLenum access_range;
+    GLenum access_range = 0;
     GLint length;
 
-    switch (target) {
-        // GL 4.2
-        case GL_ATOMIC_COUNTER_BUFFER:
-        // GL 4.3
-        case GL_DISPATCH_INDIRECT_BUFFER:
-        case GL_SHADER_STORAGE_BUFFER:
-        // GL 4.4
-        case GL_QUERY_BUFFER:
-            printf("ERROR: glMapBuffer unsupported target=0x%x\n", target);
-            break; // not supported for now
-	    case GL_DRAW_INDIRECT_BUFFER:
-        case GL_TEXTURE_BUFFER:
-            printf("ERROR: glMapBuffer unimplemented target=0x%x\n", target);
-            break;
-    }
+    // SSBO / atomic-counter / draw & dispatch-indirect / texture buffer targets are valid buffer
+    // objects on ES 3.1+ and map normally through glMapBufferRange, so nothing is special-cased here.
 
     switch (access) {
         case GL_READ_ONLY:
@@ -58,6 +45,10 @@ void *glMapBuffer(GLenum target, GLenum access) {
 
         case GL_READ_WRITE:
             access_range = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+            break;
+
+        default:
+            access_range = 0;
             break;
     }
 

@@ -124,6 +124,32 @@ void build_extension_string(context_t* context) {
         add_extra_extension(context, &length, "GL_ARB_draw_buffers_blend");
     // Used by Minecraft for the GPU usage counter (see Blaze3D TimerQuery)
     add_extra_extension(context, &length, "GL_ARB_timer_query");
+
+    // Immutable texture storage is core since OpenGL ES 3.0; glTexStorage2D/3D pass through directly.
+    add_extra_extension(context, &length, "GL_ARB_texture_storage");
+
+    // The ARB extensions below map 1:1 to OpenGL ES 3.1 core entry points. Their functions resolve
+    // to the driver's own (same-named) ES implementations through eglGetProcAddress, and the desktop
+    // GLSL is lowered to ESSL by the optimizer (see shader_wrapper.c / glsl_optimizer). Exposed only
+    // on devices that actually report ES 3.1, so the application never takes an unsupported path.
+    if(context->es31) {
+        add_extra_extension(context, &length, "GL_ARB_draw_indirect");
+        add_extra_extension(context, &length, "GL_ARB_texture_multisample");
+        add_extra_extension(context, &length, "GL_ARB_texture_storage_multisample");
+        add_extra_extension(context, &length, "GL_ARB_stencil_texturing");
+        add_extra_extension(context, &length, "GL_ARB_shader_storage_buffer_object");
+        add_extra_extension(context, &length, "GL_ARB_compute_shader");
+        add_extra_extension(context, &length, "GL_ARB_shader_image_load_store");
+        add_extra_extension(context, &length, "GL_ARB_shader_image_size");
+        add_extra_extension(context, &length, "GL_ARB_shader_atomic_counters");
+        add_extra_extension(context, &length, "GL_ARB_program_interface_query");
+    }
+
+    // glCopyImageSubData is core since OpenGL ES 3.2.
+    if(context->es32) {
+        add_extra_extension(context, &length, "GL_ARB_copy_image");
+    }
+
     // More extensions are possible, but will need way more wraps and tracking.
     fin_extra_extensions(context, length);
 }

@@ -9,8 +9,14 @@
 #include "basevertex.h"
 void glMultiDrawArrays( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
 {
-    // We'd need to merge each buffer attached to the VBO to properly achieve this. Nuh-uh. Aint no way im doin allat
     if(!current_context) return;
+    // glMultiDrawArraysEXT draws every primitive from the currently bound VBO in a single driver
+    // call, with the same semantics as looping glDrawArrays (a count of 0 is a no-op per the spec).
+    // Prefer it when available to avoid per-draw call overhead; fall back to the loop otherwise.
+    if(es3_functions.glMultiDrawArraysEXT) {
+        es3_functions.glMultiDrawArraysEXT(mode, first, count, primcount);
+        return;
+    }
     for (int i = 0; i < primcount; i++) {
         if (count[i] > 0)
             es3_functions.glDrawArrays(mode, first[i], count[i]);
