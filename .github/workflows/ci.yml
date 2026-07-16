@@ -37,10 +37,12 @@ jobs:
           sdkmanager "platforms;android-34" "ndk;28.2.13676358"
 
       - name: Build native libraries with ndk-build
+        id: build
         run: |
           set -e
           NDK_PATH=/usr/local/lib/android/sdk/ndk/28.2.13676358
           TINYWRAPPER_DIR=ltw/src/main/tinywrapper
+          mkdir -p "$TINYWRAPPER_DIR/build-logs"
           "$NDK_PATH/ndk-build" \
             NDK_PROJECT_PATH=null \
             NDK_OUT="$TINYWRAPPER_DIR/obj" \
@@ -49,7 +51,7 @@ jobs:
             NDK_APPLICATION_MK="$TINYWRAPPER_DIR/Application.mk" \
             APP_ABI="armeabi-v7a arm64-v8a x86 x86_64" \
             APP_PLATFORM=android-21 \
-            -j$(nproc)
+            -j$(nproc) 2>&1 | tee "$TINYWRAPPER_DIR/build-logs/build-output.log"
 
       - name: Verify built .so files
         run: |
@@ -79,6 +81,15 @@ jobs:
           name: ltw-native-libs
           path: ltw/src/main/tinywrapper/libs/
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ltw-build-logs
+          path: ltw/src/main/tinywrapper/build-logs/
+          if-no-files-found: ignore
           retention-days: 30
 
   release:
