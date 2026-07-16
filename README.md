@@ -102,16 +102,26 @@ Always exposed:
 - `GL_ARB_draw_buffers_blend` — per-target blend state; required by Iris. Needs OpenGL ES 3.2 or `GL_OES`/`GL_EXT_draw_buffers_indexed`.
 - `GL_ARB_timer_query` — GPU timer queries used by Minecraft's GPU usage counter.
 - `GL_ARB_texture_storage` — immutable texture storage; `glTexStorage2D/3D` are OpenGL ES 3.0 core and pass through directly.
+- `GL_ARB_shading_language_packing` — `packUnorm4x8`/`unpackUnorm4x8` etc.; ESSL 3.00 provides these built-ins natively.
 
 Exposed on OpenGL ES 3.1+ devices (entry points resolve 1:1 to the same-named ES 3.1 core functions; GLSL is lowered by the optimizer):
 
 - `GL_ARB_draw_indirect`, `GL_ARB_texture_multisample`, `GL_ARB_texture_storage_multisample`, `GL_ARB_stencil_texturing`
 - `GL_ARB_shader_storage_buffer_object`, `GL_ARB_compute_shader`, `GL_ARB_shader_image_load_store`, `GL_ARB_shader_image_size`, `GL_ARB_shader_atomic_counters`
 - `GL_ARB_program_interface_query`
+- `GL_ARB_gpu_shader5` — `precise`, `fma`, bitfield operations; ESSL 3.10 provides these.
+
+Exposed when the backing ES 3.1/3.2 core entry points actually resolved via `eglGetProcAddress` (probed at context creation, so no silent no-op stubs):
+
+- `GL_ARB_multi_draw_indirect` — `glMultiDrawArraysIndirect` / `glMultiDrawElementsIndirect` (ES 3.1 core).
+- `GL_ARB_framebuffer_no_attachments` — `glFramebufferParameteri` / `glGetFramebufferParameteriv` (ES 3.1 core).
+- `GL_ARB_vertex_attrib_binding` — `glBindVertexBuffer`, `glVertexAttribBinding`, `glVertexAttribFormat`, `glVertexBindingDivisor` (ES 3.1 core).
 
 Exposed on OpenGL ES 3.2 devices:
 
 - `GL_ARB_copy_image` — `glCopyImageSubData`, OpenGL ES 3.2 core.
+- `GL_ARB_texture_view` — `glTextureView` (ES 3.2 core, promoted from `GL_OES_texture_view`).
+- `GL_ARB_sample_shading` — `glMinSampleShading` (ES 3.2 core, promoted from `GL_OES_sample_shading`).
 
 ## OpenGL ES device requirements
 

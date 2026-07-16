@@ -128,6 +128,10 @@ void build_extension_string(context_t* context) {
     // Immutable texture storage is core since OpenGL ES 3.0; glTexStorage2D/3D pass through directly.
     add_extra_extension(context, &length, "GL_ARB_texture_storage");
 
+    // ESSL 3.00 (ES 3.0) provides the pack/unpack built-in functions that
+    // GL_ARB_shading_language_packing advertises on desktop GL.
+    add_extra_extension(context, &length, "GL_ARB_shading_language_packing");
+
     // The ARB extensions below map 1:1 to OpenGL ES 3.1 core entry points. Their functions resolve
     // to the driver's own (same-named) ES implementations through eglGetProcAddress, and the desktop
     // GLSL is lowered to ESSL by the optimizer (see shader_wrapper.c / glsl_optimizer). Exposed only
@@ -143,6 +147,21 @@ void build_extension_string(context_t* context) {
         add_extra_extension(context, &length, "GL_ARB_shader_image_size");
         add_extra_extension(context, &length, "GL_ARB_shader_atomic_counters");
         add_extra_extension(context, &length, "GL_ARB_program_interface_query");
+        // ESSL 3.10 provides precise, fma, bitfield manipulation, etc.
+        add_extra_extension(context, &length, "GL_ARB_gpu_shader5");
+    }
+
+    // Extensions whose backing ES 3.1 core entry points were individually probed
+    // in find_esversion().  Advertised only when the function pointers actually
+    // resolved, so there is no risk of a silent no-op stub.
+    if(context->multi_draw_indirect_core) {
+        add_extra_extension(context, &length, "GL_ARB_multi_draw_indirect");
+    }
+    if(context->framebuffer_no_attachments) {
+        add_extra_extension(context, &length, "GL_ARB_framebuffer_no_attachments");
+    }
+    if(context->vertex_attrib_binding) {
+        add_extra_extension(context, &length, "GL_ARB_vertex_attrib_binding");
     }
 
     // glCopyImageSubData is core since OpenGL ES 3.2.
@@ -150,7 +169,13 @@ void build_extension_string(context_t* context) {
         add_extra_extension(context, &length, "GL_ARB_copy_image");
     }
 
-    // More extensions are possible, but will need way more wraps and tracking.
+    // ES 3.2 core functions promoted from OES extensions; same names as desktop GL.
+    if(context->texture_view) {
+        add_extra_extension(context, &length, "GL_ARB_texture_view");
+    }
+    if(context->sample_shading) {
+        add_extra_extension(context, &length, "GL_ARB_sample_shading");
+    }
     fin_extra_extensions(context, length);
 }
 
@@ -180,8 +205,29 @@ static void find_esversion(context_t* context) {
     if(strstr(extensions, "GL_EXT_texture_buffer")) context->buffer_texture_ext = true;
     if(strstr(extensions, "GL_EXT_multi_draw_indirect")) context->multidraw_indirect = true;
 
-    // EXT_disjoint_timer_query provides accurate int64 timer queries
-    // on Core Profile it's ARB_timer_query instead
+    // Probe ES 3.1/3.2 core entry points (same names as desktop GL, resolved via
+    // eglGetProcAddress).  Each ARB extension below is advertised only when its
+    // backing function pointers actually resolved, so the application never takes
+    // a code path that silently no-ops.
+    if(context->es31) {
+        context->multi_draw_indirect_core =
+            es3_functions.glMultiDrawArraysIndirect != NULL &&
+            es3_functions.glMultiDrawElementsIndirect != NULL;
+        context->framebuffer_no_attachments =
+            es3_functions.glFramebufferParameteri != NULL &&
+            es3_functions.glGetFramebufferParameteriv != NULL;
+        context->vertex_attrib_binding =
+            es3_functions.glBindVertexBuffer != NULL &&
+            es3_functions.glVertexAttribBinding != NULL &&
+            es3_functions.glVertexAttribFormat != NULL &&
+            es3_functions.glVertexBindingDivisor != NULL;
+    }
+    if(context->es32) {
+        context->texture_view = es3_functions.glTextureView != NULL;
+        context->sample_shading = es3_functions.glMinSampleShading != NULL;
+    }
+    // EXT_disjoint_timer_query provides accurate int64 timer queries.
+    // On Core Profile it's ARB_timer_query instead.
     // This enables real time queries via mentioned extension, otherwise faked ones are used (see query.c)
     if(strstr(extensions, "GL_EXT_disjoint_timer_query") || env_istrue_d("LTW_ENABLE_TIMER_QUERY", false)) context->timer_query = true;
 

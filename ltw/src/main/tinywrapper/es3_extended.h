@@ -37,3 +37,22 @@ GLESFUNC(glMultiDrawElementsIndirectEXT, PFNGLMULTIDRAWELEMENTSINDIRECTEXTPROC)
 GLESFUNC(glGetQueryObjecti64vEXT, PFNGLGETQUERYOBJECTI64VEXTPROC)
 GLESFUNC(glGetQueryObjectui64vEXT, PFNGLGETQUERYOBJECTUI64VEXTPROC)
 GLESFUNC(glQueryCounterEXT, PFNGLQUERYCOUNTEREXTPROC)
+
+// OpenGL ES 3.1 core functions (same names as desktop GL; resolved via
+// eglGetProcAddress on ES 3.1+ devices).  Loaded here so LTW can verify
+// availability before advertising the matching ARB extension, and use
+// them internally when needed.  NULL on ES 3.0 — that is expected.
+GLESFUNC(glMultiDrawArraysIndirect, PFNGLMULTIDRAWARRAYSINDIRECTPROC)
+GLESFUNC(glMultiDrawElementsIndirect, PFNGLMULTIDRAWELEMENTSINDIRECTPROC)
+GLESFUNC(glFramebufferParameteri, PFNGLFRAMEBUFFERPARAMETERIPROC)
+GLESFUNC(glGetFramebufferParameteriv, PFNGLGETFRAMEBUFFERPARAMETERIVPROC)
+GLESFUNC(glBindVertexBuffer, PFNGLBINDVERTEXBUFFERPROC)
+GLESFUNC(glVertexAttribBinding, PFNGLVERTEXATTRIBBINDINGPROC)
+GLESFUNC(glVertexAttribFormat, PFNGLVERTEXATTRIBFORMATPROC)
+GLESFUNC(glVertexAttribIFormat, PFNGLVERTEXATTRIBIFORMATPROC)
+GLESFUNC(glVertexBindingDivisor, PFNGLVERTEXBINDINGDIVISORPROC)
+
+// OpenGL ES 3.2 core functions (promoted from OES extensions; same names as
+// desktop GL).  NULL on ES 3.0/3.1.
+GLESFUNC(glTextureView, PFNGLTEXTUREVIEWPROC)
+GLESFUNC(glMinSampleShading, PFNGLMINSAMPLESHADINGPROC)
