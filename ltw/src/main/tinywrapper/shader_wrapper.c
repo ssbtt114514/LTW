@@ -7,6 +7,7 @@
 #include "unordered_map/unordered_map.h"
 #include "vgpu_shaderconv/shaderconv.h"
 #include "glsl_optimizer/src/code/c_wrapper.h"
+#include "shader_wrapper.h"
 #include <GLES3/gl3.h>
 #include <string.h>
 #include "string_utils.h"
@@ -17,11 +18,6 @@ typedef struct {
     GLenum shader_type;
     const GLchar* source;
 } shader_info_t;
-
-typedef struct {
-    GLuint frag_shader;
-    GLchar* colorbindings[MAX_DRAWBUFFERS];
-} program_info_t;
 
 GLuint glCreateProgram(void) {
     if(!current_context) return 0;

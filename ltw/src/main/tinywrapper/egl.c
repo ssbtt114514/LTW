@@ -4,6 +4,7 @@
  * For use under LGPL-3.0
  */
 #include "egl.h"
+#include "shader_wrapper.h"
 #include "unordered_map/int_hash.h"
 #include "string_utils.h"
 #include "env.h"
