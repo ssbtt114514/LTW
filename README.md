@@ -1,10 +1,62 @@
 ## Large Thin Wrapper
 A thin OpenGL core-to-OpenGL ES wrapper, primarily intended for running Minecraft.
 
-# Building
-`./gradlew :ltw:assembleRelease`
+# Prerequisites
 
-After completion, an AAR with native libraries will be available in `ltw/build/outputs/aar/ltw-release.aar`
+| Tool | Version |
+|---|---|
+| JDK | 17 |
+| Android SDK | Platform 34 (`android-34`) |
+| Android NDK | `28.2.13676358` |
+| Gradle | 7.5 (wrapper included) |
+| Android Gradle Plugin | 7.4.1 |
+
+The build is driven by the bundled Gradle wrapper, so no system-wide Gradle
+installation is required. AGP will download the pinned NDK on demand if it is
+not already present in the local SDK.
+
+# Building
+
+```bash
+./gradlew :ltw:assembleRelease        # Unix / macOS / Git Bash
+gradlew.bat :ltw:assembleRelease      # Windows (cmd / PowerShell)
+```
+
+After completion, an AAR with native libraries will be available in
+`ltw/build/outputs/aar/ltw-release.aar`.
+
+## Target ABIs
+
+LTW ships native libraries for every Android ABI supported by NDK 28. The
+`APP_ABI` directive in [`Application.mk`](ltw/src/main/tinywrapper/Application.mk)
+and the `ndk.abiFilters` block in [`ltw/build.gradle`](ltw/build.gradle) are kept
+in sync so the same set is compiled by `ndk-build` and packaged into the AAR.
+
+| ABI | Architecture | Typical devices |
+|---|---|---|
+| `armeabi-v7a` | ARMv7-A (32-bit, arm32) | Older / low-end Android phones |
+| `arm64-v8a` | ARMv8-A (64-bit, arm64) | Modern Android phones & tablets |
+| `x86` | IA-32 (32-bit) | x86 Android emulators |
+| `x86_64` | x86-64 (64-bit, x64) | x86-64 emulators & ChromeOS |
+
+All four ABIs are built from a single invocation; there is no need to select a
+target. Each ABI lives in its own `lib/<abi>/libltw.so` entry inside the AAR.
+
+## Continuous integration
+
+The repository ships a GitHub Actions workflow at
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) that:
+
+1. Sets up JDK 17, the Android SDK and the pinned NDK.
+2. Builds the release AAR with `./gradlew :ltw:assembleRelease`.
+3. Verifies the AAR exists and is non-trivial in size.
+4. Checks that `libltw.so` is present for **every** expected ABI
+   (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`); the run fails if any are missing.
+5. Uploads the AAR as a workflow artifact.
+6. On a pushed `v*` tag, publishes a GitHub Release with the AAR attached.
+
+The workflow triggers on pushes to `main`/`master`, on pull requests, on version
+tags, and via manual `workflow_dispatch`.
 
 # OpenGL requirements
 
@@ -42,11 +94,24 @@ Reported strings:
 
 Exposed ARB extensions (see `build_extension_string()` in [egl.c](ltw/src/main/tinywrapper/egl.c)):
 
+Always exposed:
+
 - `GL_ARB_buffer_storage` — persistent mapped buffers; backed by `GL_EXT_buffer_storage`.
 - `GL_ARB_texture_buffer_object` — texture buffers; backed by `GL_EXT_texture_buffer` or OpenGL ES 3.2.
 - `GL_ARB_draw_elements_base_vertex` — base-vertex indexed drawing.
 - `GL_ARB_draw_buffers_blend` — per-target blend state; required by Iris. Needs OpenGL ES 3.2 or `GL_OES`/`GL_EXT_draw_buffers_indexed`.
 - `GL_ARB_timer_query` — GPU timer queries used by Minecraft's GPU usage counter.
+- `GL_ARB_texture_storage` — immutable texture storage; `glTexStorage2D/3D` are OpenGL ES 3.0 core and pass through directly.
+
+Exposed on OpenGL ES 3.1+ devices (entry points resolve 1:1 to the same-named ES 3.1 core functions; GLSL is lowered by the optimizer):
+
+- `GL_ARB_draw_indirect`, `GL_ARB_texture_multisample`, `GL_ARB_texture_storage_multisample`, `GL_ARB_stencil_texturing`
+- `GL_ARB_shader_storage_buffer_object`, `GL_ARB_compute_shader`, `GL_ARB_shader_image_load_store`, `GL_ARB_shader_image_size`, `GL_ARB_shader_atomic_counters`
+- `GL_ARB_program_interface_query`
+
+Exposed on OpenGL ES 3.2 devices:
+
+- `GL_ARB_copy_image` — `glCopyImageSubData`, OpenGL ES 3.2 core.
 
 ## OpenGL ES device requirements
 
