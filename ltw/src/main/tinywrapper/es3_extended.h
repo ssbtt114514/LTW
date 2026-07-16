@@ -56,7 +56,9 @@ GLESFUNC(glVertexAttribFormat, PFNGLVERTEXATTRIBFORMATPROC)
 GLESFUNC(glVertexAttribIFormat, PFNGLVERTEXATTRIBIFORMATPROC)
 GLESFUNC(glVertexBindingDivisor, PFNGLVERTEXBINDINGDIVISORPROC)
 
-// OpenGL ES 3.2 core functions (promoted from OES extensions; same names as
-// desktop GL).  NULL on ES 3.0/3.1.
-GLESFUNC(glTextureView, PFNGLTEXTUREVIEWPROC)
-GLESFUNC(glMinSampleShading, PFNGLMINSAMPLESHADINGPROC)
+// NOTE: glTextureView / glMinSampleShading are ES 3.2 core functions promoted
+// from OES extensions.  The NDK gl32.h does NOT define PFNGLTEXTUREVIEWPROC or
+// PFNGLMINSAMPLESHADINGPROC (only the OES-suffixed variants).  Do not add the
+// unsuffixed GLESFUNC lines here — they break the build with "unknown type name".
+// When support is needed, use the OES-suffixed entry points with a forwarding
+// override in es3_overrides.h.

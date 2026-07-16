@@ -171,13 +171,10 @@ void build_extension_string(context_t* context) {
         add_extra_extension(context, &length, "GL_ARB_copy_image");
     }
 
-    // ES 3.2 core functions promoted from OES extensions; same names as desktop GL.
-    if(context->texture_view) {
-        add_extra_extension(context, &length, "GL_ARB_texture_view");
-    }
-    if(context->sample_shading) {
-        add_extra_extension(context, &length, "GL_ARB_sample_shading");
-    }
+    // NOTE: GL_ARB_texture_view / GL_ARB_sample_shading are NOT advertised here
+    // because the NDK gl32.h does not define the unsuffixed PFN typedefs for
+    // glTextureView / glMinSampleShading (only OES-suffixed variants exist).
+    // When support is needed, add forwarding overrides in es3_overrides.h.
     fin_extra_extensions(context, length);
 }
 
@@ -220,10 +217,6 @@ static void find_esversion(context_t* context) {
             es3_functions.glVertexAttribBinding != NULL &&
             es3_functions.glVertexAttribFormat != NULL &&
             es3_functions.glVertexBindingDivisor != NULL;
-    }
-    if(context->es32) {
-        context->texture_view = es3_functions.glTextureView != NULL;
-        context->sample_shading = es3_functions.glMinSampleShading != NULL;
     }
     // EXT_disjoint_timer_query provides accurate int64 timer queries.
     // On Core Profile it's ARB_timer_query instead.

@@ -119,8 +119,6 @@ Exposed when the backing ES 3.1/3.2 core entry points actually resolved via `egl
 Exposed on OpenGL ES 3.2 devices:
 
 - `GL_ARB_copy_image` — `glCopyImageSubData`, OpenGL ES 3.2 core.
-- `GL_ARB_texture_view` — `glTextureView` (ES 3.2 core, promoted from `GL_OES_texture_view`).
-- `GL_ARB_sample_shading` — `glMinSampleShading` (ES 3.2 core, promoted from `GL_OES_sample_shading`).
 
 ## OpenGL ES device requirements
 
