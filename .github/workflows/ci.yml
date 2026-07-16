@@ -56,8 +56,14 @@ jobs:
         run: |
           set -e
           LIBS_DIR=ltw/src/main/tinywrapper/libs
-          echo "=== Built .so files ==="
-          find "$LIBS_DIR" -name 'libsr.so' -exec ls -lh {} \;
+          echo "=== LIBS_DIR exists? ==="
+          ls -la "$LIBS_DIR" 2>/dev/null || echo "LIBS_DIR does not exist"
+          echo
+          echo "=== Find all .so files ==="
+          find "$LIBS_DIR" -name '*.so' -exec ls -lh {} \; 2>/dev/null || echo "No .so files found"
+          echo
+          echo "=== Find all .so files in project ==="
+          find . -name '*.so' -type f 2>/dev/null | head -20
           echo
           echo "=== Per-ABI check ==="
           missing=0
