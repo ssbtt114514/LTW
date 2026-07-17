@@ -2,6 +2,7 @@
 #define LTW_GLSL_FOR_ES_H
 
 #include <stdbool.h>
+#include <GLES2/gl2.h>
 
 char* ltw_convert_glsl_for_es(const char* glsl, GLenum shader_type, int target_es_version);
 char* ltw_replace_version_line(const char* text, const char* new_version);

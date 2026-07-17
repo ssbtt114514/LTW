@@ -440,11 +440,11 @@ char* ltw_convert_arb_to_glsl(const char* arb_code, bool is_vertex, char** error
     state.pos += 10;
     
     while (*state.pos) {
-        skip_whitespace(state);
+        skip_whitespace(&state);
         
         if (*state.pos == '\0') break;
         if (*state.pos == '#') {
-            skip_line(state);
+            skip_line(&state);
             continue;
         }
         
@@ -492,7 +492,7 @@ char* ltw_convert_arb_to_glsl(const char* arb_code, bool is_vertex, char** error
             if (inst_type == INST_END) break;
         }
         
-        skip_whitespace(state);
+        skip_whitespace(&state);
         if (*state.pos == ';') state.pos++;
         if (*state.pos == '\n') state.pos++;
     }
