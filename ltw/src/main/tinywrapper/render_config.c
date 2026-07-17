@@ -2,6 +2,8 @@
 #include "env.h"
 #include "debug.h"
 #include <GLES3/gl3.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 render_config_t ltw_render_config = {0};
@@ -187,8 +189,6 @@ GLenum render_config_pick_color_format(GLenum requested) {
             }
             return GL_RGB16F;
         case GL_R32F:
-        case GL_G32F:
-        case GL_B32F:
             if (!cfg->enable_float_textures) {
                 return GL_R8;
             }
@@ -199,7 +199,6 @@ GLenum render_config_pick_color_format(GLenum requested) {
             }
             return GL_RG32F;
         case GL_R16F:
-        case GL_G16F:
             if (!cfg->enable_16bit_textures && !cfg->enable_float_textures) {
                 return GL_R8;
             }

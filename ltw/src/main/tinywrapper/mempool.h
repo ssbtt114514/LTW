@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 #define MEMPOOL_MAX_POOLS 8
 #define MEMPOOL_CHUNK_SIZE 64

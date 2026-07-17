@@ -70,15 +70,7 @@ typedef void (GL_APIENTRY *GLDEBUGPROC)(GLenum source, GLenum type, GLuint id,
 #define GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS 0x90DB
 #endif
 
-#ifndef GL_R16
-#define GL_R16 0x8229
-#endif
-#ifndef GL_RG16
-#define GL_RG16 0x822B
-#endif
-#ifndef GL_RGBA16
-#define GL_RGBA16 0x822D
-#endif
+
 
 /* ── 1. glPolygonMode — emulate desktop polygon mode on ES ──────────── */
 
@@ -286,13 +278,13 @@ void glClearBufferData(GLenum target, GLenum internalformat,
     GLint elementSize = 4; /* default to 4 bytes */
     switch(internalformat) {
         case GL_R8: case GL_R8UI: case GL_R8I: elementSize = 1; break;
-        case GL_R16: case GL_R16UI: case GL_R16I: elementSize = 2; break;
+        case GL_R16F: case GL_R16UI: case GL_R16I: elementSize = 2; break;
         case GL_R32UI: case GL_R32I: case GL_R32F: elementSize = 4; break;
         case GL_RG8: case GL_RG8UI: elementSize = 2; break;
-        case GL_RG16: case GL_RG16UI: elementSize = 4; break;
+        case GL_RG16F: case GL_RG16UI: elementSize = 4; break;
         case GL_RG32UI: case GL_RG32I: case GL_RG32F: elementSize = 8; break;
         case GL_RGBA8: case GL_RGBA8UI: elementSize = 4; break;
-        case GL_RGBA16: case GL_RGBA16UI: elementSize = 8; break;
+        case GL_RGBA16F: case GL_RGBA16UI: elementSize = 8; break;
         case GL_RGBA32UI: case GL_RGBA32I: case GL_RGBA32F: elementSize = 16; break;
         default: break;
     }
@@ -324,13 +316,13 @@ void glClearBufferSubData(GLenum target, GLenum internalformat,
     GLint elementSize = 4;
     switch(internalformat) {
         case GL_R8: case GL_R8UI: case GL_R8I: elementSize = 1; break;
-        case GL_R16: case GL_R16UI: case GL_R16I: elementSize = 2; break;
+        case GL_R16F: case GL_R16UI: case GL_R16I: elementSize = 2; break;
         case GL_R32UI: case GL_R32I: case GL_R32F: elementSize = 4; break;
         case GL_RG8: case GL_RG8UI: elementSize = 2; break;
-        case GL_RG16: case GL_RG16UI: elementSize = 4; break;
+        case GL_RG16F: case GL_RG16UI: elementSize = 4; break;
         case GL_RG32UI: case GL_RG32I: case GL_RG32F: elementSize = 8; break;
         case GL_RGBA8: case GL_RGBA8UI: elementSize = 4; break;
-        case GL_RGBA16: case GL_RGBA16UI: elementSize = 8; break;
+        case GL_RGBA16F: case GL_RGBA16UI: elementSize = 8; break;
         case GL_RGBA32UI: case GL_RGBA32I: case GL_RGBA32F: elementSize = 16; break;
         default: break;
     }
